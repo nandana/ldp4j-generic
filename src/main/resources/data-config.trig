@@ -1,0 +1,19 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ldp: <http://www.w3.org/ns/ldp#> .
+@prefix ldp4j: <http://ldp4j.org/vocab/> .
+@prefix methods: <http://www.w3.org/2011/http-methods#> .
+
+<http://localhost:8080/ldp4j/ldp-bc/>
+    {
+       <http://localhost:8080/ldp4j/ldp-bc/> a ldp:Container, ldp:BasicContainer;
+       dcterms:title 'Default LDP Basic Container' .
+    }
+
+<ldp4j://localhost:8080/ldp4j/ldp-bc/>
+    {
+        <http://localhost:8080/ldp4j/ldp-bc/> a ldp:BasicContainer;
+        ldp4j:allowedMethod methods:POST;
+        ldp4j:allowedMethod methods:PUT .
+    }
