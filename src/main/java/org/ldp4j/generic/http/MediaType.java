@@ -114,6 +114,14 @@ public class MediaType {
         return sb.toString();
     }
 
+    public String getValue(){
+        if (subtype != null){
+            return String.format("%s/%s", type, subtype);
+        } else {
+            return type;
+        }
+    }
+
     private static TreeMap<String, String> createParametersMap(Map<String, String> initialValues) {
         TreeMap map = new TreeMap(new Comparator<String>() {
             public int compare(String o1, String o2) {

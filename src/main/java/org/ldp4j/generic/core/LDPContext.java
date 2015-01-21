@@ -1,6 +1,7 @@
 package org.ldp4j.generic.core;
 
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -14,6 +15,10 @@ public class LDPContext {
     private HttpServletResponse servletResponse;
 
     private Model dataModel;
+
+    private Resource resourceType;
+
+    private int entityTag;
 
     private Map<String, String> properties = new HashMap<String, String>();
 
@@ -51,6 +56,22 @@ public class LDPContext {
         this.dataModel = dataModel;
     }
 
+    public Resource getResourceType() {
+        return resourceType;
+    }
+
+    public void setResourceType(Resource resourceType) {
+        this.resourceType = resourceType;
+    }
+
+    public int getEntityTag() {
+        return entityTag;
+    }
+
+    public void setEntityTag(int entityTag) {
+        this.entityTag = entityTag;
+    }
+
     public void setProperty(String key, String value){
         properties.put(key, value);
     }
@@ -62,5 +83,11 @@ public class LDPContext {
     public static final String REQUEST_URL = "request_url";
 
     public static final String DATA_MODEL = "data_model";
+
+    public static final String CREATED_RESOURCE_URI = "new_uri";
+
+    public static final String METHOD = "method";
+
+    public static final String RESP_CONTENT_TYPE = "response-content-type";
 
 }

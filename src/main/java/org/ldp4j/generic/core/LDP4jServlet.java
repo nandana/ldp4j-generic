@@ -1,7 +1,7 @@
 package org.ldp4j.generic.core;
 
-import org.ldp4j.generic.handlers.ResourceResolver;
-import org.ldp4j.generic.handlers.ResponseRDFWriter;
+import org.ldp4j.generic.handlers.*;
+import org.ldp4j.generic.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +39,8 @@ public class LDP4jServlet extends HttpServlet {
 
         List<Handler> handlerChain = new ArrayList<Handler>();
         handlerChain.add(new ResourceResolver());
+        handlerChain.add(new RequestPreProcessor());
+        handlerChain.add(new RequestPostProcessor());
         handlerChain.add(new ResponseRDFWriter());
         engine.setHandlerChain(handlerChain);
 
@@ -46,7 +48,8 @@ public class LDP4jServlet extends HttpServlet {
             engine.serve(context);
         } catch (LDPFault ldpFault) {
             if(ldpFault.isProcessable()){
-
+                HttpStatus statusCode = ldpFault.getStatusCode();
+                resp.sendError(statusCode.code());
             } else {
                 throw new ServletException(ldpFault);
             }
@@ -64,13 +67,15 @@ public class LDP4jServlet extends HttpServlet {
 
         List<Handler> handlerChain = new ArrayList<Handler>();
         handlerChain.add(new ResourceResolver());
+        handlerChain.add(new BasicContainerCreateHandler());
         engine.setHandlerChain(handlerChain);
 
         try {
             engine.serve(context);
         } catch (LDPFault ldpFault) {
             if(ldpFault.isProcessable()){
-
+                HttpStatus statusCode = ldpFault.getStatusCode();
+                resp.sendError(statusCode.code());
             } else {
                 throw new ServletException(ldpFault);
             }

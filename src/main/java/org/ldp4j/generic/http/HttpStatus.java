@@ -3,6 +3,10 @@ package org.ldp4j.generic.http;
 public enum HttpStatus {
     CONTINUE(100, "Continue"),
     OK(200, "OK"),
+    BAD_REQUEST(400, "Bad Request"),
+    FORBIDDEN(403, "Forbidden"),
+    NOT_FOUND(404, "Not Found"),
+    METHOD_NOT_ALLOWED(405, "Method Not Allowed"),
     NOT_ACCEPTABLE(406,"Not Acceptable"),
     INTERNAL_SERVER_ERROR(500, "Internal Server Error"),
     UNSUPPORTED_MEDIA_TYPE(415, "Unsupported media type");
@@ -14,5 +18,9 @@ public enum HttpStatus {
     HttpStatus(int statusCode, String description){
         this.statusCode = statusCode;
         this.description = description;
+    }
+
+    public int code(){
+        return  statusCode;
     }
 }

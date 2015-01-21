@@ -14,11 +14,12 @@ import org.ldp4j.generic.core.LDPFault;
 import org.ldp4j.generic.http.*;
 import org.ldp4j.generic.rdf.RdfUtils;
 import org.ldp4j.generic.rdf.vocab.LDP;
+import org.ldp4j.generic.rdf.vocab.LDP4J;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
+import static org.ldp4j.generic.rdf.RdfUtils.resource;
 
 public class BasicContainerCreateHandler implements Handler {
 
@@ -26,6 +27,11 @@ public class BasicContainerCreateHandler implements Handler {
 
     @Override
     public HandlerResponse invoke(LDPContext context) throws LDPFault {
+
+        if(!LDP.BasicContainer.equals(context.getResourceType())){
+            return HandlerResponse.CONTINUE;
+        }
+
         String containerURI = context.getProperty(LDPContext.REQUEST_URL);
         if(!containerURI.endsWith("/")){
             throw new LDPFault(HttpStatus.INTERNAL_SERVER_ERROR, "The container URI doesn't end with a slash");
@@ -38,6 +44,8 @@ public class BasicContainerCreateHandler implements Handler {
         String slug = HttpUtils.getHeaderValue("Slug", context);
         if(slug != null) {
             logger.debug("Slug header found - '{}'", slug);
+        } else {
+            slug = "";
         }
 
         newURI = containerURI + slug;
@@ -45,8 +53,9 @@ public class BasicContainerCreateHandler implements Handler {
         int counter = 0;
         // Check whether the URI already exists
         while(RdfUtils.resourceExists(newURI)) {
-            newURI = containerURI + slug + counter++;
-            logger.trace("Checking whether resource {} already exists ...", newURI);
+            logger.trace("Resource '{}' already exists ...", newURI);
+            newURI = containerURI + slug + ++counter;
+            logger.trace("Checking if resource '{}' already exists ...", newURI);
         }
 
         String metaURI = newURI.replaceFirst("^https?://", "ldp4j://");
@@ -68,19 +77,18 @@ public class BasicContainerCreateHandler implements Handler {
             try {
                 model.read(context.getServletRequest().getInputStream(), newURI, format);
 
+                // Create the new resource
                 Dataset dataset = ConfigManager.getDataset();
                 dataset.begin(ReadWrite.WRITE) ;
                 try {
+                    Model container = dataset.getNamedModel(containerURI);
+                    container.add(resource(containerURI), LDP.contains, resource(newURI));
                     dataset.addNamedModel(newURI, model);
-
-
+                    dataset.addNamedModel(metaURI, createMetaMode(newURI));
                     dataset.commit() ;
                 } finally {
                     dataset.end() ;
                 }
-
-
-
 
             } catch (IOException e) {
                 throw new LDPFault(HttpStatus.INTERNAL_SERVER_ERROR, "Error reading the request." ,e);
@@ -105,6 +113,7 @@ public class BasicContainerCreateHandler implements Handler {
         Model metaModel = ModelFactory.createDefaultModel();
         Resource resource = metaModel.createResource(metaURI);
         resource.addProperty(RDF.type, LDP.RDFSource);
+        resource.addLiteral(LDP4J.etag, 1);
 
         return metaModel;
 

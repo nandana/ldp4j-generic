@@ -40,4 +40,7 @@ public class LDPFault extends Exception {
         return processable;
     }
 
+    public HttpStatus getStatusCode() {
+        return statusCode;
+    }
 }

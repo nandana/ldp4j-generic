@@ -2,17 +2,19 @@ package org.ldp4j.generic.rdf;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.ReadWrite;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.ldp4j.generic.config.ConfigManager;
 import org.ldp4j.generic.http.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Created by nandana on 1/20/15.
- */
 public class RdfUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(RdfUtils.class);
+
+    private static Model m_model = ModelFactory.createDefaultModel();
 
     public static boolean resourceExists(String graphName){
 
@@ -43,6 +45,14 @@ public class RdfUtils {
 
         return format;
 
+    }
+
+    public static Resource resource(String resourceURI) {
+        return m_model.createResource(resourceURI);
+    }
+
+    public static Resource property(String propertyURI) {
+        return m_model.createProperty(propertyURI);
     }
 
 }

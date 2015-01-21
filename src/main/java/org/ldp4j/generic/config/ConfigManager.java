@@ -16,7 +16,7 @@ public class ConfigManager implements ServletContextListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigManager.class);
 
-    private static Dataset dataset;
+    private static String DATASET_DIR = "dataset";
 
     /**
      * Receives notification that the web application initialization
@@ -31,10 +31,6 @@ public class ConfigManager implements ServletContextListener {
      */
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-
-        // Make a TDB-backed dataset
-        String directory = "dataset" ;
-        dataset = TDBFactory.createDataset(directory);
 
         loadInitDataset();
 
@@ -58,11 +54,8 @@ public class ConfigManager implements ServletContextListener {
 
 
     public static Dataset getDataset(){
-        if(dataset == null){
-            logger.error("Dataset is not correctly initialized ...");
-            throw new IllegalStateException("Dataset is not correctly initialized ...");
-        }
-        return dataset;
+
+        return TDBFactory.createDataset(DATASET_DIR);
     }
 
     private void loadInitDataset(){
@@ -70,20 +63,26 @@ public class ConfigManager implements ServletContextListener {
         logger.debug("loading the initial dataset ...");
 
         Dataset initData = RDFDataMgr.loadDataset("data-config.trig") ;
+        Dataset dataset = TDBFactory.createDataset(DATASET_DIR);
 
         Iterator<String> listNames = initData.listNames();
         while (listNames.hasNext()) {
             String name = listNames.next();
             logger.debug("NamedGraph {} loaded ...", name);
 
-            Model model = initData.getNamedModel(name);
-            dataset.begin(ReadWrite.WRITE) ;
             try {
-                dataset.addNamedModel(name, model);
-                dataset.commit() ;
+                dataset.begin(ReadWrite.WRITE) ;
+                if (!dataset.containsNamedModel(name)) {
+                    Model model = initData.getNamedModel(name);
+
+                        dataset.addNamedModel(name, model);
+                        dataset.commit() ;
+                    }
             } finally {
                 dataset.end() ;
             }
+
+
         }
 
     }

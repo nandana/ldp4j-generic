@@ -43,15 +43,19 @@ public class ResponseRDFWriter implements Handler {
 
         // Check for supported media types
         String format = null;
+        MediaType contentType = null;
         for (MediaType mediaType: mediaTypes) {
             if (MediaType.TURTLE.isCompatible(mediaType)) {
                 format = "TURTLE";
+                contentType = mediaType;
                 break;
             } else if (MediaType.JSON_LD.isCompatible(mediaType)) {
                 format = "JSON-LD";
+                contentType = mediaType;
                 break;
             } else if (MediaType.RDF_XML.isCompatible(mediaType)) {
                 format = "RDF/XML";
+                contentType = mediaType;
                 break;
             }
         }
@@ -61,8 +65,11 @@ public class ResponseRDFWriter implements Handler {
                         "fulfilled. Supported media types are : text/turtle, application/ld+json, and application/rdf+xml"));
         }
 
+        context.setProperty(LDPContext.RESP_CONTENT_TYPE, contentType.getValue());
+
         HttpServletResponse response = context.getServletResponse();
         try {
+            response.setHeader(HttpHeader.CONTENT_TYPE.value(), contentType.getValue());
             ServletOutputStream outputStream = response.getOutputStream();
             dataModel.write(outputStream, format);
         } catch (IOException e) {
