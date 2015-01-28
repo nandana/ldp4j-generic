@@ -1,6 +1,7 @@
-package org.ldp4j.generic.http;
+package org.ldp4j.generic.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.ldp4j.generic.http.MediaType;
 
 import java.util.*;
 import java.util.regex.Matcher;

@@ -1,14 +1,17 @@
-package org.ldp4j.generic.rdf;
+package org.ldp4j.generic.util;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.ReadWrite;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.ldp4j.generic.config.ConfigManager;
 import org.ldp4j.generic.http.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.StringWriter;
 
 public class RdfUtils {
 
@@ -51,8 +54,20 @@ public class RdfUtils {
         return m_model.createResource(resourceURI);
     }
 
-    public static Resource property(String propertyURI) {
+    public static Property property(String propertyURI) {
         return m_model.createProperty(propertyURI);
     }
+
+    public static String toString(Model model){
+        return toString(model, "TURTLE");
+    }
+
+    public static String toString(Model model, String lang){
+        StringWriter writer = new StringWriter();
+        model.write(writer, lang);
+        return writer.toString();
+    }
+
+
 
 }

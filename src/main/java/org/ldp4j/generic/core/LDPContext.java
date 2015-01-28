@@ -88,6 +88,8 @@ public class LDPContext {
 
     public static final String METHOD = "method";
 
-    public static final String RESP_CONTENT_TYPE = "response-content-type";
+    public static final String RESP_CONTENT_TYPE = "response_content_type";
+
+    public static final String INTERACTION_MODEL = "interaction_model";
 
 }

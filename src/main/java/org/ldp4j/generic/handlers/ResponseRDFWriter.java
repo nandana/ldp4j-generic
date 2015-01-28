@@ -8,7 +8,7 @@ import org.ldp4j.generic.core.LDPFault;
 import org.ldp4j.generic.http.HttpHeader;
 import org.ldp4j.generic.http.HttpStatus;
 import org.ldp4j.generic.http.MediaType;
-import org.ldp4j.generic.http.MediaTypeUtils;
+import org.ldp4j.generic.util.MediaTypeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

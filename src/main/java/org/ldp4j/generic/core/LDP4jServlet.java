@@ -67,7 +67,8 @@ public class LDP4jServlet extends HttpServlet {
 
         List<Handler> handlerChain = new ArrayList<Handler>();
         handlerChain.add(new ResourceResolver());
-        handlerChain.add(new BasicContainerCreateHandler());
+        handlerChain.add(new PostOnContainerHandler());
+        handlerChain.add(new RequestPostProcessor());
         engine.setHandlerChain(handlerChain);
 
         try {

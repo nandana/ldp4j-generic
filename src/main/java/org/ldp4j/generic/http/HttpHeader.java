@@ -35,7 +35,10 @@ public enum HttpHeader {
     VARY("Vary"),
     WWW_AUTHENTICATE("WWW-Authenticate"),
     COOKIE("Cookie"),
-    SET_COOKIE("Set-Cookie");
+    SET_COOKIE("Set-Cookie"),
+    ACCESS_CONTROL_ALLOW_ORIGIN("Access-Control-Allow-Origin"),
+    ACCESS_CONTROL_ALLOW_HEADERS("Access-Control-Allow-Headers"),
+    ACCESS_CONTROL_ALLOW_METHODS("Access-Control-Allow-Methods");
 
     private final String name;
 

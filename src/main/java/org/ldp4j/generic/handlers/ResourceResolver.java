@@ -12,7 +12,7 @@ import org.ldp4j.generic.core.HandlerResponse;
 import org.ldp4j.generic.core.LDPContext;
 import org.ldp4j.generic.core.LDPFault;
 import org.ldp4j.generic.http.HttpStatus;
-import static org.ldp4j.generic.rdf.RdfUtils.resource;
+import static org.ldp4j.generic.util.RdfUtils.resource;
 
 import org.ldp4j.generic.rdf.vocab.LDP4J;
 import org.slf4j.Logger;
@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
+import java.util.Map;
 
 /**
  * Check if the resource exists in the dataset.
@@ -61,6 +62,13 @@ public class ResourceResolver implements Handler {
 
             dataModel = dataset.getNamedModel(url);
             metaModel = dataset.getNamedModel(metaURL);
+
+            Map<String, String> nsPrefixMap = dataModel.getNsPrefixMap();
+            System.out.println("Size:" + nsPrefixMap.size());
+            for (Map.Entry<String, String> entry : nsPrefixMap.entrySet()) {
+                System.out.println( entry.getKey()+ ":" + entry.getValue());
+            }
+
 
             NodeIterator typeIterator = metaModel.listObjectsOfProperty(resource(url), RDF.type);
             // At the moment we consider we only have one type in the server managed metadata graph. We assume that

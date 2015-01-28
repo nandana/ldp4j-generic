@@ -16,6 +16,8 @@ public class LDP4J {
     /** <p>The namespace of the vocabulary as a string</p> */
     public static final String NS = "http://ldp4j.org/vocab/";
 
+    public static final String PREFIX = "ldp4j";
+
     /** <p>The namespace of the vocabulary as a string</p>
      *  @see #NS */
     public static String getURI() {return NS;}

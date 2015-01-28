@@ -1,6 +1,5 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix ldp: <http://www.w3.org/ns/ldp#> .
 @prefix ldp4j: <http://ldp4j.org/vocab/> .
@@ -8,11 +7,39 @@
 <http://localhost:8080/ldp4j/ldp-bc/>
     {
        <http://localhost:8080/ldp4j/ldp-bc/> a ldp:Container, ldp:BasicContainer;
-       dcterms:title 'Default LDP Basic Container' .
+            dcterms:title 'Default LDP Basic Container' .
+    }
+
+<http://localhost:8080/ldp4j/ldp-dc/>
+    {
+       <http://localhost:8080/ldp4j/ldp-dc/> a ldp:Container, ldp:DirectContainer;
+            ldp:membershipResource <http://localhost:8080/ldp4j/ldp-dc/>;
+            ldp:hasMemberRelation ldp:member;
+            dcterms:title 'Default LDP Direct Container' .
+    }
+
+<http://localhost:8080/ldp4j/ldp-dci/>
+    {
+       <http://localhost:8080/ldp4j/ldp-dci/> a ldp:Container, ldp:DirectContainer;
+            ldp:membershipResource <http://localhost:8080/ldp4j/ldp-dci/>;
+            ldp:isMemberOfRelation ldp4j:isMemberOf;
+            dcterms:title 'Default LDP Direct Container (Inverted)' .
     }
 
 <ldp4j://localhost:8080/ldp4j/ldp-bc/>
     {
         <http://localhost:8080/ldp4j/ldp-bc/> a ldp:BasicContainer;
-            ldp4j:etag "1"^^xsd:integer;
+            ldp4j:etag "1"^^xsd:integer .
+    }
+
+<ldp4j://localhost:8080/ldp4j/ldp-dc/>
+    {
+        <http://localhost:8080/ldp4j/ldp-dc/> a ldp:DirectContainer;
+            ldp4j:etag "1"^^xsd:integer .
+    }
+
+<ldp4j://localhost:8080/ldp4j/ldp-dci/>
+    {
+        <http://localhost:8080/ldp4j/ldp-dci/> a ldp:DirectContainer;
+            ldp4j:etag "1"^^xsd:integer .
     }

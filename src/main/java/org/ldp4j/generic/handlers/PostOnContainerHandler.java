@@ -12,23 +12,40 @@ import org.ldp4j.generic.core.HandlerResponse;
 import org.ldp4j.generic.core.LDPContext;
 import org.ldp4j.generic.core.LDPFault;
 import org.ldp4j.generic.http.*;
-import org.ldp4j.generic.rdf.RdfUtils;
+import org.ldp4j.generic.util.HttpUtils;
+import org.ldp4j.generic.ldp.runtime.BasicContainerStrategy;
+import org.ldp4j.generic.ldp.runtime.ContainerStrategy;
+import org.ldp4j.generic.ldp.runtime.DirectContainerStrategy;
+import org.ldp4j.generic.ldp.runtime.IndirectContainerStrategy;
+import org.ldp4j.generic.util.MediaTypeUtils;
+import org.ldp4j.generic.util.RdfUtils;
 import org.ldp4j.generic.rdf.vocab.LDP;
 import org.ldp4j.generic.rdf.vocab.LDP4J;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import static org.ldp4j.generic.rdf.RdfUtils.resource;
+import static org.ldp4j.generic.util.RdfUtils.resource;
 
-public class BasicContainerCreateHandler implements Handler {
+public class PostOnContainerHandler implements Handler {
 
-    private static final Logger logger = LoggerFactory.getLogger(BasicContainerCreateHandler.class);
+    private static final String NAME = "PostOnContainerHandler";
+
+    private static final Logger logger = LoggerFactory.getLogger(PostOnContainerHandler.class);
 
     @Override
     public HandlerResponse invoke(LDPContext context) throws LDPFault {
 
-        if(!LDP.BasicContainer.equals(context.getResourceType())){
+        ContainerStrategy strategy;
+
+        if(LDP.BasicContainer.equals(context.getResourceType())){
+            strategy = new BasicContainerStrategy();
+        } else if (LDP.DirectContainer.equals(context.getResourceType())) {
+            strategy = new DirectContainerStrategy();
+        } else if (LDP.IndirectContainer.equals(context.getResourceType())) {
+            strategy = new IndirectContainerStrategy();
+        } else {
             return HandlerResponse.CONTINUE;
         }
 
@@ -82,9 +99,14 @@ public class BasicContainerCreateHandler implements Handler {
                 dataset.begin(ReadWrite.WRITE) ;
                 try {
                     Model container = dataset.getNamedModel(containerURI);
+                    //Add the containment triple
                     container.add(resource(containerURI), LDP.contains, resource(newURI));
+
+                    //Add the membership triple
+                    strategy.addMemberTriple(containerURI, newURI, model, container);
+
                     dataset.addNamedModel(newURI, model);
-                    dataset.addNamedModel(metaURI, createMetaMode(newURI));
+                    dataset.addNamedModel(metaURI, createMetaMode(newURI, context));
                     dataset.commit() ;
                 } finally {
                     dataset.end() ;
@@ -98,21 +120,29 @@ public class BasicContainerCreateHandler implements Handler {
                     contentType));
         }
 
+        HttpServletResponse response = context.getServletResponse();
+        response.setStatus(HttpStatus.CREATED.code());
+        response.setHeader(HttpHeader.LOCATION.value(), newURI);
 
-
-        return null;
+        return HandlerResponse.CONTINUE;
     }
 
     @Override
     public String getName() {
-        return null;
+        return NAME;
     }
 
-    private Model createMetaMode(String metaURI) {
+    private Model createMetaMode(String metaURI, LDPContext context) {
+
+        String interactionModel = context.getProperty(LDPContext.INTERACTION_MODEL);
+        //If the interaction model is not specified, we will use the resource interaction model as default
+        if(interactionModel == null){
+            interactionModel = LDP.Resource.getURI();
+        }
 
         Model metaModel = ModelFactory.createDefaultModel();
         Resource resource = metaModel.createResource(metaURI);
-        resource.addProperty(RDF.type, LDP.RDFSource);
+        resource.addProperty(RDF.type, RdfUtils.resource(interactionModel));
         resource.addLiteral(LDP4J.etag, 1);
 
         return metaModel;

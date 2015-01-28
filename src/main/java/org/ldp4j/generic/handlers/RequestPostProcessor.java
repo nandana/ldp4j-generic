@@ -31,6 +31,11 @@ public class RequestPostProcessor implements Handler {
         Resource type = context.getResourceType();
         response.setHeader(HttpHeader.LINK.value(), getTypeLinkHeader(type));
 
+        //Set CORS headers
+        response.setHeader(HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN.value(), "*");
+        response.setHeader(HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS.value(), "*");
+        response.setHeader(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS.value(), "HEAD, OPTIONS, GET");
+
         return HandlerResponse.CONTINUE;
     }
 

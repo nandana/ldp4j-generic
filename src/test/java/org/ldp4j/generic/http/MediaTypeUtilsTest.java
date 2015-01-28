@@ -1,6 +1,8 @@
 package org.ldp4j.generic.http;
 
 import org.junit.Test;
+import org.ldp4j.generic.util.MediaTypeUtils;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.hasItems;
 

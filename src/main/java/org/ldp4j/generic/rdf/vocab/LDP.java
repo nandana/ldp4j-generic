@@ -13,6 +13,8 @@ public class LDP {
     /** <p>The namespace of the vocabulary as a string</p> */
     public static final String NS = "http://www.w3.org/ns/ldp#";
 
+    public static final String PREFIX = "ldp";
+
     /** <p>The namespace of the vocabulary as a string</p>
      *  @see #NS */
     public static String getURI() {return NS;}
@@ -45,6 +47,15 @@ public class LDP {
 
     /** <p>contains - Links a container with resources created through the container.</p> */
     public static final Property contains = m_model.createProperty( NS + "contains" );
+
+    /** <p>Indicates which predicate is used in membership triples, and that the membership triple pattern is < membership-constant-URI , object-of-hasMemberRelation, member-URI></p> */
+    public static final Property hasMemberRelation = m_model.createProperty( NS + "hasMemberRelation" );
+
+    public static final Property isMemberOfRelation = m_model.createProperty( NS + "isMemberOfRelation" );
+
+    public static final Property membershipResource = m_model.createProperty( NS + "membershipResource" );
+
+    public static final Property insertedContentRelation = m_model.createProperty( NS + "insertedContentRelation" );
 
 
 }
