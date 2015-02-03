@@ -3,6 +3,7 @@ package org.ldp4j.generic.config;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.ReadWrite;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.sparql.vocabulary.DOAP;
 import com.hp.hpl.jena.tdb.TDBFactory;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.hp.hpl.jena.vocabulary.RDF;
@@ -19,6 +20,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import java.io.File;
 import java.util.Iterator;
+import java.util.Map;
 
 public class ConfigManager implements ServletContextListener {
 
@@ -102,6 +104,8 @@ public class ConfigManager implements ServletContextListener {
         Dataset initData = RDFDataMgr.loadDataset("data-config.trig") ;
         Dataset dataset = TDBFactory.createDataset(datasetPath);
 
+        Map<String, String> nsPrefixMap = initData.getDefaultModel().getNsPrefixMap();
+
         Iterator<String> listNames = initData.listNames();
         while (listNames.hasNext()) {
             String name = listNames.next();
@@ -111,9 +115,11 @@ public class ConfigManager implements ServletContextListener {
                 dataset.begin(ReadWrite.WRITE) ;
                 if (!dataset.containsNamedModel(name)) {
                     Model model = initData.getNamedModel(name);
-                    addPrefixes(model);
+                    model.setNsPrefixes(nsPrefixMap);
                     dataset.addNamedModel(name, model);
                     dataset.commit() ;
+                } else {
+                    dataset.abort();
                 }
             } finally {
                 dataset.end() ;
@@ -123,11 +129,5 @@ public class ConfigManager implements ServletContextListener {
 
     }
 
-    private void addPrefixes(Model model){
-        model.setNsPrefix(LDP.PREFIX, LDP.NS);
-        model.setNsPrefix("dcterms", DCTerms.NS);
-        model.setNsPrefix("rdf", RDF.getURI());
-        model.setNsPrefix("xsd", XSD.getURI());
-    }
 
 }

@@ -82,6 +82,8 @@ public class LDPContext {
 
     public static final String REQUEST_URL = "request_url";
 
+    public static final String META_URL = "meta_url";
+
     public static final String DATA_MODEL = "data_model";
 
     public static final String CREATED_RESOURCE_URI = "new_uri";

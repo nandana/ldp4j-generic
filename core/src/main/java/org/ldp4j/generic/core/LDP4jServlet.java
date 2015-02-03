@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 public class LDP4jServlet extends HttpServlet {
@@ -26,13 +27,42 @@ public class LDP4jServlet extends HttpServlet {
 
     }
 
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException
+    {
+        logger.debug("Started processing the OPTIONS request on '{}'", req.getRequestURL());
+
+        LDPContext context = new LDPContext(req,resp);
+        LDP4jEngine engine = new LDP4jEngine();
+
+        List<Handler> handlerChain = new ArrayList<Handler>();
+        handlerChain.add(new ResourceResolver());
+        handlerChain.add(new RequestPostProcessor());
+        engine.setHandlerChain(handlerChain);
+
+
+        try {
+            engine.serve(context);
+        } catch (LDPFault ldpFault) {
+            if(ldpFault.isProcessable()){
+                HttpStatus statusCode = ldpFault.getStatusCode();
+                resp.sendError(statusCode.code());
+            } else {
+                throw new ServletException(ldpFault);
+            }
+        }
+
+
+
+    }
+
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException
     {
 
-        logger.debug("Started processing the GET request ...");
+        logger.debug("Started processing the GET request on '{}'", req.getRequestURL());
 
         LDPContext context = new LDPContext(req,resp);
         LDP4jEngine engine = new LDP4jEngine();
@@ -62,6 +92,8 @@ public class LDP4jServlet extends HttpServlet {
             throws ServletException, IOException
     {
 
+        logger.debug("Started processing the POST request on '{}'", req.getRequestURL());
+
         LDPContext context = new LDPContext(req,resp);
         LDP4jEngine engine = new LDP4jEngine();
 
@@ -89,6 +121,34 @@ public class LDP4jServlet extends HttpServlet {
             throws ServletException, IOException
     {
 
+        logger.debug("Started processing the PUT request on '{}'", req.getRequestURL());
+        logger.debug(req.getInputStream().toString());
+        Enumeration<String> headerNames = req.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String header = headerNames.nextElement();
+            logger.debug(header + ":" + req.getHeader(header));
+        }
+
+        LDPContext context = new LDPContext(req,resp);
+        LDP4jEngine engine = new LDP4jEngine();
+
+        List<Handler> handlerChain = new ArrayList<Handler>();
+        handlerChain.add(new ResourceResolver());
+        handlerChain.add(new PutOnLdprHandler());
+        handlerChain.add(new RequestPostProcessor());
+        engine.setHandlerChain(handlerChain);
+
+
+        try {
+            engine.serve(context);
+        } catch (LDPFault ldpFault) {
+            if(ldpFault.isProcessable()){
+                HttpStatus statusCode = ldpFault.getStatusCode();
+                resp.sendError(statusCode.code());
+            } else {
+                throw new ServletException(ldpFault);
+            }
+        }
     }
 
     @Override
@@ -98,6 +158,5 @@ public class LDP4jServlet extends HttpServlet {
     {
 
     }
-
 
 }

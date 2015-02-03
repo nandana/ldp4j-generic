@@ -40,6 +40,7 @@ public class RequestPreProcessor implements Handler {
         // Check if the method is allowed
         String method = request.getMethod();
         context.setProperty(LDPContext.METHOD, method);
+        logger.debug("Request method is set to {}", method);
 
         if(LDP.RDFSource.equals(type) && !RESOURCE_METHODS.contains(method)){
             logger.error("Method {} is not allowed for LDP RDF Sources. Allowed methods are {}.", method, Joiner.on(",").join(RESOURCE_METHODS));

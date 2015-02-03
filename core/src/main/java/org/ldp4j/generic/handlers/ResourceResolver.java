@@ -45,13 +45,16 @@ public class ResourceResolver implements Handler {
         logger.debug("Metadata URI: {}", metaURL);
 
         context.setProperty(LDPContext.REQUEST_URL, url);
+        context.setProperty(LDPContext.META_URL, metaURL);
 
         Dataset dataset = ConfigManager.getDataset();
 
         Model dataModel;
         Model metaModel;
-        dataset.begin(ReadWrite.READ) ;
         Resource type;
+
+
+        dataset.begin(ReadWrite.READ) ;
         try {
 
             // Resource not found in the dataset
@@ -63,19 +66,12 @@ public class ResourceResolver implements Handler {
             dataModel = dataset.getNamedModel(url);
             metaModel = dataset.getNamedModel(metaURL);
 
-            Map<String, String> nsPrefixMap = dataModel.getNsPrefixMap();
-            System.out.println("Size:" + nsPrefixMap.size());
-            for (Map.Entry<String, String> entry : nsPrefixMap.entrySet()) {
-                System.out.println( entry.getKey()+ ":" + entry.getValue());
-            }
-
-
             NodeIterator typeIterator = metaModel.listObjectsOfProperty(resource(url), RDF.type);
             // At the moment we consider we only have one type in the server managed metadata graph. We assume that
             // on the most specific type is included in the metadata graph.
             if(typeIterator.hasNext()) {
                 type = typeIterator.next().asResource();
-                logger.debug("'Resource type of '{}' is resolved to '{}'", url, type.getURI());
+                logger.debug("'Resource type: {}'", type.getURI());
                 while (typeIterator.hasNext()) {
                     Resource secondType = typeIterator.next().asResource();
                     if (!type.equals(secondType)) {
@@ -91,8 +87,7 @@ public class ResourceResolver implements Handler {
             }
 
             NodeIterator etagIterator = metaModel.listObjectsOfProperty(resource(url), LDP4J.etag);
-            // At the moment we consider we only have one type in the server managed metadata graph. We assume that
-            // on the most specific type is included in the metadata graph.
+            // At the moment we keep the etag as a version number and update it based on the update
             if(etagIterator.hasNext()) {
                 int etag = etagIterator.next().asLiteral().getInt();
                 context.setEntityTag(etag);

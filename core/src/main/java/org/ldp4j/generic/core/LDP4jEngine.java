@@ -12,6 +12,10 @@ public class LDP4jEngine {
 
     public void serve(LDPContext context) throws LDPFault {
 
+        if (handlerChain == null) {
+            throw new IllegalStateException("LDP4j engine is not correctly configured with a handler chain");
+        }
+
         for (Handler handler : handlerChain) {
             HandlerResponse response = handler.invoke(context);
             lastHandlerName = handler.getName();

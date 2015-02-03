@@ -1,5 +1,6 @@
 package org.ldp4j.generic.handlers;
 
+import com.google.common.base.Joiner;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.ldp4j.generic.core.Handler;
 import org.ldp4j.generic.core.HandlerResponse;
@@ -11,21 +12,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Collections;
 
 public class RequestPostProcessor implements Handler {
 
     private static final Logger logger = LoggerFactory.getLogger(RequestPostProcessor.class);
 
-    private static final String NAME = "ProtocolHeaderWriter";
+    private static final String NAME = "RequestPostProcessor";
 
     @Override
     public HandlerResponse invoke(LDPContext context) throws LDPFault {
 
         HttpServletResponse response = context.getServletResponse();
+        String method = context.getProperty(LDPContext.METHOD);
 
         //Set the entity tag
-        int etag = context.getEntityTag();
-        response.setHeader(HttpHeader.ETAG.value(), "\"" + Integer.toString(etag) + "\"" );
+        if(!"OPTIONS".equals(method) || !"DELETE".equals(method)) {
+            int etag = context.getEntityTag();
+            response.setHeader(HttpHeader.ETAG.value(), "\"" + Integer.toString(etag) + "\"" );
+        }
 
         //Set the LDP headers
         Resource type = context.getResourceType();
@@ -33,8 +38,9 @@ public class RequestPostProcessor implements Handler {
 
         //Set CORS headers
         response.setHeader(HttpHeader.ACCESS_CONTROL_ALLOW_ORIGIN.value(), "*");
-        response.setHeader(HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS.value(), "*");
-        response.setHeader(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS.value(), "HEAD, OPTIONS, GET");
+        response.setHeader(HttpHeader.ACCESS_CONTROL_ALLOW_HEADERS.value(), "Accept, Content-Type, If-Match, Link");
+        response.setHeader(HttpHeader.ACCESS_CONTROL_ALLOW_METHODS.value(), "HEAD, OPTIONS, GET, PUT, POST");
+        response.setHeader(HttpHeader.ACCESS_CONTROL_EXPOSE_HEADERS.value(), Joiner.on(",").join(response.getHeaderNames()));
 
         return HandlerResponse.CONTINUE;
     }

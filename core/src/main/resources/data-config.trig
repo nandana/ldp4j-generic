@@ -4,13 +4,34 @@
 @prefix ldp4j: <http://ldp4j.org/vocab/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-
+@prefix doap: <http://usefulinc.com/ns/doap#> .
 
 {
-    ldp4j:server ldp4j:readOnlyProperty {
-
-    }
+    ldp4j:server ldp4j:readOnlyProperty dcterms:created .
 }
+
+<http://localhost:8080/ldp4j/doap>
+    {
+       <http://localhost:8080/ldp4j/doap/> foaf:primaryTopic <http://github.com/nandana/ldp4j-generic> .
+
+       <http://github.com/nandana/ldp4j-generic> a doap:Project ;
+            doap:license <http://spdx.org/licenses/Apache-2.0> ;
+            doap:name "LDP4j Generic" ;
+            doap:homepage <http://github.com/nandana/ldp4j-generic> ;
+            doap:description "An open source Java-based framework for the development of read-write Linked Data applications based on the W3C Linked Data Platform 1.0 (LDP) specification." ;
+            doap:bug-database <https://github.com/nandana/ldp4j-generic/issues> ;
+            doap:programming-language "Java" ;
+            doap:category <http://projects.apache.org/category/http> ;
+            doap:repository [
+                a doap:GitRepository ;
+                doap:location <https://github.com/nandana/ldp4j-generic>
+            ] ;
+            doap:maintainer [
+                a foaf:Person ;
+                foaf:name "Nandana Mihindukulasooriya" ;
+                foaf:mbox <mailto:nandana.cse@gmail.com>
+            ] .
+    }
 
 <http://localhost:8080/ldp4j/ldp-bc/>
     {
@@ -50,6 +71,12 @@
             ldp:isMemberOfRelation ldp4j:isMemberOf;
             dcterms:title 'Default LDP Indirect Container (Inverted)' .
     }
+
+<ldp4j://localhost:8080/ldp4j/doap>
+  {
+        <http://localhost:8080/ldp4j/doap> a ldp:Resource;
+            ldp4j:etag "1"^^xsd:integer .
+  }
 
 <ldp4j://localhost:8080/ldp4j/ldp-bc/>
     {

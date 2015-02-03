@@ -9,6 +9,8 @@ public enum HttpStatus {
     NOT_FOUND(404, "Not Found"),
     METHOD_NOT_ALLOWED(405, "Method Not Allowed"),
     NOT_ACCEPTABLE(406,"Not Acceptable"),
+    CONDITION_FAILED(412, "Condition Failed"),
+    PRECONDITION_REQUIRED(428, "Precondition Required"),
     INTERNAL_SERVER_ERROR(500, "Internal Server Error"),
     UNSUPPORTED_MEDIA_TYPE(415, "Unsupported media type");
 
@@ -23,5 +25,9 @@ public enum HttpStatus {
 
     public int code(){
         return  statusCode;
+    }
+
+    public String description(){
+        return description;
     }
 }
