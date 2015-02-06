@@ -1,3 +1,20 @@
+<!--
+
+    Copyright (C) 2014 Ontology Engineering Group, Universidad Politécnica de Madrid (http://www.oeg-upm.net/)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <html>
 <head>
     <meta charset="utf-8">
@@ -136,6 +153,16 @@
                             </form>
 
                         </div>
+
+                        <div>
+                            <div id="update_response">
+                                <textarea class="form-control col-xs-12" disabled id="update_response"
+                                          rows="15" style="visibility: hidden"></textarea>
+                                <pre id="update_status"></pre>
+                                <pre id="update_headers"></pre>
+                            </div>
+                        </div>
+
                     </div>
                     <div class="tab-pane" id="create">
                         <h1>Create an LDP resource (or a container)</h1>
@@ -206,8 +233,6 @@
         var body = document.getElementById("put_body");
         var etag = document.getElementById("put_etag");
 
-        alert(url.value);
-
         $.ajax({
             type: "PUT",
             url: url.value,
@@ -218,44 +243,27 @@
             },
             success: function (data, textStatus, xhr) {
                 console.log(textStatus);
+                if(xhr.responseText){
+                    var response = document.getElementById("update_response");
+                    response.style.visibility = 'visible';
+                    response.value = xhr.responseText;
+                }
+
+                document.getElementById("update_status").textContent = xhr.status + ' ' + textStatus ;
+                document.getElementById("update_headers").textContent = xhr.getAllResponseHeaders();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if(xhr.responseText){
+                    var response = document.getElementById("update_response");
+                    response.style.visibility = 'visible';
+                    response.value = errorThrown;
+                }
+
+                document.getElementById("update_status").textContent = xhr.status + ' ' + textStatus ;
+                document.getElementById("update_headers").textContent = xhr.getAllResponseHeaders();
             }
         });
 
-    }
-
-    function renderHeaders(){
-        //var tableDiv = $("<div class='table-responsive'>");
-        var tableDiv = $("<div>");
-
-        var table = $("<table class='table table-striped table-bordered table-hover table-condensed small'>");
-
-        tableDiv.append(table);
-
-        ///
-        /// Table head
-        ///
-        html = "<thead>" +
-        "    <tr>" +
-        "        <th><strong>Header</strong></th>" +
-        "        <th><strong>Value</strong></th>" +
-        "     </tr>" +
-        "</thead>";
-
-        var tableHead = $(html);
-        table.append(tableHead);
-
-        var headers= ["a", "b", "c"];
-        var values= ["1", "2", "3"];
-
-        for (var currentRow = 0; currentRow < headers.length; currentRow++) {
-            html = "<tr>";
-            html = html + "<td>" + headers[currentRow] + "</td>";
-            html = html + "<td>" + values[currentRow] + "</td>";
-            html = html + "</tr>";
-            table.append($(html));
-        }
-
-        $('#get_headers').html(tableDiv);
     }
 
 </script>

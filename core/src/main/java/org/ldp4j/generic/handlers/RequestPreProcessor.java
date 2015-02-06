@@ -1,3 +1,18 @@
+/**
+ * Copyright (C) 2014 Ontology Engineering Group, Universidad Politécnica de Madrid (http://www.oeg-upm.net/)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.ldp4j.generic.handlers;
 
 import com.google.common.base.Joiner;
@@ -7,6 +22,7 @@ import org.ldp4j.generic.core.Handler;
 import org.ldp4j.generic.core.HandlerResponse;
 import org.ldp4j.generic.core.LDPContext;
 import org.ldp4j.generic.core.LDPFault;
+import org.ldp4j.generic.http.HttpMethod;
 import org.ldp4j.generic.http.HttpStatus;
 import org.ldp4j.generic.http.Link;
 import org.ldp4j.generic.http.LinkBuilderImpl;
@@ -20,6 +36,13 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 
+/***
+ * <p> Request pre processor extracts generic headers from the request and set them on the context</p>
+ * <ul>
+ *     <ul> Check if the method is allowed </ul>
+ *     <ul>Extracts the interaction model </ul>
+ * </ul>
+ */
 public class RequestPreProcessor implements Handler {
 
     private static final Logger logger = LoggerFactory.getLogger(RequestPreProcessor.class);
@@ -39,7 +62,7 @@ public class RequestPreProcessor implements Handler {
 
         // Check if the method is allowed
         String method = request.getMethod();
-        context.setProperty(LDPContext.METHOD, method);
+        context.setMethod(HttpMethod.valueOf(method));
         logger.debug("Request method is set to {}", method);
 
         if(LDP.RDFSource.equals(type) && !RESOURCE_METHODS.contains(method)){
@@ -75,8 +98,10 @@ public class RequestPreProcessor implements Handler {
                 logger.debug("Unknown interaction model: {}", interactionModel);
                 throw new LDPFault(HttpStatus.BAD_REQUEST, "Unknown interaction model: " + interactionModel);
             }
-            logger.debug("{} interaction model found.");
+            logger.debug("{} interaction model found.", interactionModel);
             context.setProperty(LDPContext.INTERACTION_MODEL, interactionModel);
+        } else {
+            logger.debug("No interaction model found in the request.");
         }
 
         return HandlerResponse.CONTINUE;

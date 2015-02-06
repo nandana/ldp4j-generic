@@ -1,3 +1,18 @@
+/**
+ * Copyright (C) 2014 Ontology Engineering Group, Universidad Politécnica de Madrid (http://www.oeg-upm.net/)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.ldp4j.generic.handlers;
 
 import com.hp.hpl.jena.query.Dataset;
@@ -11,10 +26,12 @@ import org.ldp4j.generic.core.Handler;
 import org.ldp4j.generic.core.HandlerResponse;
 import org.ldp4j.generic.core.LDPContext;
 import org.ldp4j.generic.core.LDPFault;
+import org.ldp4j.generic.http.HttpMethod;
 import org.ldp4j.generic.http.HttpStatus;
 import static org.ldp4j.generic.util.RdfUtils.resource;
 
 import org.ldp4j.generic.rdf.vocab.LDP4J;
+import org.ldp4j.generic.util.LDP4JUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +40,15 @@ import java.io.ByteArrayOutputStream;
 import java.util.Map;
 
 /**
- * Check if the resource exists in the dataset.
+ * <p>Resource resolver handler checks if the resource exists in the dataset.</p>
+ * <ul>
+ *     <li>Retrieves the request url and sets it as the <code>LDPContext.REQUEST_URL</code> property.</li>
+ *     <li>Generates the metadata URI and sets it as the <code>LDPContext.META_URL</code> property.</li>
+ *     <li>If the metadata graph is not found in the dataset, responds with a not found. (In the special case of PUT,
+ *     the process continues and the flag is set in the context to indicate that it is a put to create request.</li>
+ *     <li>Sets the resource type based on the metamodel data.</li>
+ * </ul>
+ *
  */
 public class ResourceResolver implements Handler {
 
@@ -40,8 +65,7 @@ public class ResourceResolver implements Handler {
         String url = request.getRequestURL().toString();
         logger.debug("Request URL: {}", url);
 
-        String scheme = request.getScheme();
-        String metaURL = getMetadataURI(url, scheme);
+        String metaURL = LDP4JUtils.toMetadataURI(url);
         logger.debug("Metadata URI: {}", metaURL);
 
         context.setProperty(LDPContext.REQUEST_URL, url);
@@ -58,9 +82,16 @@ public class ResourceResolver implements Handler {
         try {
 
             // Resource not found in the dataset
-            if (!dataset.containsNamedModel(metaURL) && !"PUT".equals(request.getMethod())) {
-                logger.error("Resource '{}' not found in the dataset", metaURL);
-                throw new LDPFault(HttpStatus.NOT_FOUND);
+            if (!dataset.containsNamedModel(metaURL)) {
+                if (! HttpMethod.PUT.name().equals(request.getMethod())) {
+                    logger.error("Resource '{}' not found in the dataset", metaURL);
+                    throw new LDPFault(HttpStatus.NOT_FOUND);
+                } else {
+                    //In the case of PUT, this can be PutToCreate function
+                    context.setPutToCreate(true);
+                    return HandlerResponse.CONTINUE;
+                }
+
             }
 
             dataModel = dataset.getNamedModel(url);
@@ -86,6 +117,9 @@ public class ResourceResolver implements Handler {
                 throw new LDPFault(HttpStatus.INTERNAL_SERVER_ERROR, String.format("No type found in the metadata graph for '{}'.", url));
             }
 
+            //TODO validate the resource type. It has to be a valid type
+            context.setResourceType(type);
+
             NodeIterator etagIterator = metaModel.listObjectsOfProperty(resource(url), LDP4J.etag);
             // At the moment we keep the etag as a version number and update it based on the update
             if(etagIterator.hasNext()) {
@@ -101,8 +135,6 @@ public class ResourceResolver implements Handler {
                 logger.error("Entity tag not found in the metadata graph \n {}.", os.toString());
                 throw new LDPFault(HttpStatus.INTERNAL_SERVER_ERROR, String.format("Entity tag not found in the metadata graph for '{}'.", url));
             }
-
-            context.setResourceType(type);
 
         } finally {
             dataset.end() ;
@@ -125,9 +157,4 @@ public class ResourceResolver implements Handler {
         return NAME;
     }
 
-    private String getMetadataURI(String uri, String scheme){
-
-        return uri.replaceFirst(scheme, "ldp4j");
-
-    }
 }

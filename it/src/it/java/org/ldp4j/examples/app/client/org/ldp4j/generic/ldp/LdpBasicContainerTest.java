@@ -1,5 +1,6 @@
 /**
- * Copyright (C) 2014 Ontology Engineering Group, Universidad Politécnica de Madrid (http://www.oeg-upm.net/)
+ * Copyright (C) 2014 Ontology Engineering Group, Universidad Politécnica de Madrid
+ * (http://www.oeg-upm.net/)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.ldp4j.examples.app.client.org.ldp4j.generic.ldp;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.sparql.vocabulary.FOAF;
+import com.hp.hpl.jena.vocabulary.DCTerms;
+import com.hp.hpl.jena.vocabulary.RDF;
 import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -38,20 +42,17 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringWriter;
 import java.net.URL;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
 @RunWith(Arquillian.class)
-public class LdprTest {
+public class LdpBasicContainerTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(LdprTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(LdpBasicContainerTest.class);
 
     private static final String WEBAPP_ID = "org.ldp4j.generic:ldp4j-generic-core:war:";
 
@@ -75,44 +76,56 @@ public class LdprTest {
     }
 
     @Test
-    public void testGet(@ArquillianResource URL contextURL) throws Exception {
+    public void testCreateChildContainer(@ArquillianResource URL contextURL) throws Exception {
 
-        String ldprURI = contextURL + "doap";
+        String ldpBcURI = contextURL + "ldp-bc/";
 
         logger.debug("Context URL : {}", contextURL.toString());
-        logger.debug("DOAP Resource URL : {}", ldprURI);
+        logger.debug("Basic Container URL : {}", ldpBcURI);
 
         HttpClient client = new DefaultHttpClient();
-        HttpGet get = new HttpGet(ldprURI);
-        get.setHeader("Accept", "text/turtle");
 
-        HttpResponse response = client.execute(get);
+        HttpPost post = new HttpPost(ldpBcURI);
+        post.setHeader("Link", "<http://www.w3.org/ns/ldp#BasicContainer>; rel=\"type\"");
+        post.setEntity(createBasicContainer());
 
-        assertThat("successful retrieval",response.getStatusLine().getStatusCode(), equalTo(HttpStatus.SC_OK));
+        HttpResponse response = client.execute(post);
+        assertThat("successful resource creation",response.getStatusLine().getStatusCode(), equalTo(HttpStatus.SC_CREATED));
 
-        HttpEntity entity = response.getEntity();
+        Header location = response.getFirstHeader("Location");
+        assertThat("location header present", location, is(notNullValue()));
+        client.getConnectionManager().shutdown();
 
-        assertThat("body shouldn't be empty", entity, is(notNullValue()));
+        // Creating a descendant child
+        client = new DefaultHttpClient();
+        post =  new HttpPost(location.getValue());
+        post.setHeader("Link", "<http://www.w3.org/ns/ldp#BasicContainer>; rel=\"type\"");
+        post.setEntity(createBasicContainer());
 
-        Model model = ModelFactory.createDefaultModel();
-        model.read(entity.getContent(), null, "TURTLE");
+        response = client.execute(post);
+        assertThat("successful resource creation",response.getStatusLine().getStatusCode(), equalTo(HttpStatus.SC_CREATED));
 
-        Resource doap = model.createResource("http://localhost:8080/ldp4j/doap/");
-        Resource ldp4j = model.createResource("http://github.com/nandana/ldp4j-generic");
-        boolean primaryTopicPresent = model.contains(doap, FOAF.primaryTopic, ldp4j);
-
-        assertThat(primaryTopicPresent, is(true));
-
-        StringWriter stringWriter = new StringWriter();
-        model.write(stringWriter, "TURTLE");
-        logger.debug("DOAP LDPR Content : {} \n", stringWriter.toString());
+        location = response.getFirstHeader("Location");
+        assertThat("location header present", location, is(notNullValue()));
 
         client.getConnectionManager().shutdown();
 
-        Header[] etags = response.getHeaders("Etag");
-        assertThat("The server should provide an etag", etags.length, is(1));
+    }
 
+    private StringEntity createBasicContainer() {
 
+        Model model = ModelFactory.createDefaultModel();
+        Resource resource = model.createResource("");
+        resource.addProperty(RDF.type, "http://www.w3.org/ns/ldp#BasicContainer");
+        resource.addProperty(RDF.type, "http://www.w3.org/ns/ldp#Container");
+        resource.addProperty(DCTerms.title, "A child container");
+
+        StringWriter writer = new StringWriter();
+        model.write(writer, "TURTLE");
+        StringEntity entity = new StringEntity(writer.toString(), ContentType.create("text/turtle"));
+
+        return entity;
 
     }
+
 }
