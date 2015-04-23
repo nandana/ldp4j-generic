@@ -19,17 +19,22 @@ package org.ldp4j.examples.app.client.org.ldp4j.generic.ldp;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.sparql.vocabulary.FOAF;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.hp.hpl.jena.vocabulary.RDF;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.fest.util.Arrays;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -42,8 +47,7 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.URL;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -94,10 +98,11 @@ public class LdpBasicContainerTest {
 
         Header location = response.getFirstHeader("Location");
         assertThat("location header present", location, is(notNullValue()));
-        client.getConnectionManager().shutdown();
+        EntityUtils.consumeQuietly(response.getEntity());
+        //client.getConnectionManager().shutdown();
 
         // Creating a descendant child
-        client = new DefaultHttpClient();
+        //client = new DefaultHttpClient();
         post =  new HttpPost(location.getValue());
         post.setHeader("Link", "<http://www.w3.org/ns/ldp#BasicContainer>; rel=\"type\"");
         post.setEntity(createBasicContainer());
@@ -112,6 +117,65 @@ public class LdpBasicContainerTest {
 
     }
 
+
+    public void testDirectContainerPOST(@ArquillianResource URL contextURL) throws Exception {
+
+        String ldpDcURI = contextURL.toString() + "ldp-bc/";
+
+        logger.debug("Context URL : {}", contextURL.toString());
+        logger.debug("Direct Container URL : {}", ldpDcURI);
+
+        HttpClient client = new DefaultHttpClient();
+
+        HttpGet get = new HttpGet(ldpDcURI);
+        get.setHeader("Accept", "text/turtle");
+        HttpResponse response = client.execute(get);
+
+        PipedInputStream in = new PipedInputStream();
+        PipedOutputStream out = new PipedOutputStream(in);
+        response.getEntity().writeTo(out);
+
+        Model containerBefore = ModelFactory.createDefaultModel();
+        containerBefore.read(in, null, "Turtle");
+
+        HttpPost post = new HttpPost(ldpDcURI);
+        post.setHeader("Link", "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"");
+        post.setEntity(createResource());
+
+        response = client.execute(post);
+        assertThat("successful resource creation",response.getStatusLine().getStatusCode(), equalTo(HttpStatus.SC_CREATED));
+
+        Header location = response.getFirstHeader("Location");
+        assertThat("location header present", location, is(notNullValue()));
+        EntityUtils.consumeQuietly(response.getEntity());
+
+        get = new HttpGet(ldpDcURI);
+        get.setHeader("Accept", "text/turtle");
+        response = client.execute(get);
+
+        in = new PipedInputStream();
+        out = new PipedOutputStream(in);
+        response.getEntity().writeTo(out);
+
+        Model containerAfter = ModelFactory.createDefaultModel();
+        containerAfter.read(in, null, "Turtle");
+
+        client.getConnectionManager().shutdown();
+
+        Resource container = containerBefore.createResource(ldpDcURI);
+        Resource newRessResource = containerBefore.createResource(location.getValue());
+        Property ldpContains = containerBefore.createProperty("http://www.w3.org/ns/ldp#contains");
+        boolean presentBefore = containerBefore.contains(container, ldpContains, newRessResource);
+        boolean presentAfter = containerAfter.contains(container, ldpContains, newRessResource);
+
+        logger.debug("Checking for the triple <{}, {}, {}>", Arrays.array(ldpDcURI, "ldp:contains", location.getValue()));
+        assertThat("Not present before creation", presentBefore, is(false));
+        assertThat("Present after creation", presentBefore, is(false));
+
+
+
+    }
+
     private StringEntity createBasicContainer() {
 
         Model model = ModelFactory.createDefaultModel();
@@ -119,6 +183,22 @@ public class LdpBasicContainerTest {
         resource.addProperty(RDF.type, "http://www.w3.org/ns/ldp#BasicContainer");
         resource.addProperty(RDF.type, "http://www.w3.org/ns/ldp#Container");
         resource.addProperty(DCTerms.title, "A child container");
+
+        StringWriter writer = new StringWriter();
+        model.write(writer, "TURTLE");
+        StringEntity entity = new StringEntity(writer.toString(), ContentType.create("text/turtle"));
+
+        return entity;
+
+    }
+
+    private StringEntity createResource() {
+
+        Model model = ModelFactory.createDefaultModel();
+        Resource resource = model.createResource("");
+        resource.addProperty(RDF.type, FOAF.Person);
+        resource.addProperty(FOAF.name, "Nandana Mihindulasooriya");
+        resource.addLiteral(FOAF.primaryTopic, "#me");
 
         StringWriter writer = new StringWriter();
         model.write(writer, "TURTLE");

@@ -20,6 +20,10 @@ package org.ldp4j.generic.http;
  */
 public enum HttpHeader {
 
+    ACCESS_CONTROL_ALLOW_HEADERS("Access-Control-Allow-Headers"),
+    ACCESS_CONTROL_ALLOW_METHODS("Access-Control-Allow-Methods"),
+    ACCESS_CONTROL_ALLOW_ORIGIN("Access-Control-Allow-Origin"),
+    ACCESS_CONTROL_EXPOSE_HEADERS("Access-Control-Expose-Headers"),
     ACCEPT("Accept"),
     ACCEPT_CHARSET("Accept-Charset"),
     ACCEPT_ENCODING("Accept-Encoding"),
@@ -47,15 +51,13 @@ public enum HttpHeader {
     LOCATION("Location"),
     LINK("Link"),
     RETRY_AFTER("Retry-After"),
+    PREFER("Prefer"),
+    PREFERENCE_APPLIED("Preference-Applied"),
     USER_AGENT("User-Agent"),
     VARY("Vary"),
     WWW_AUTHENTICATE("WWW-Authenticate"),
     COOKIE("Cookie"),
-    SET_COOKIE("Set-Cookie"),
-    ACCESS_CONTROL_ALLOW_ORIGIN("Access-Control-Allow-Origin"),
-    ACCESS_CONTROL_ALLOW_HEADERS("Access-Control-Allow-Headers"),
-    ACCESS_CONTROL_ALLOW_METHODS("Access-Control-Allow-Methods"),
-    ACCESS_CONTROL_EXPOSE_HEADERS("Access-Control-Expose-Headers");
+    SET_COOKIE("Set-Cookie");
 
     private final String header;
 

@@ -39,6 +39,8 @@ public class MediaType {
 
     public static final MediaType RDF_XML = new MediaType("application", "rdf+xml");
 
+    public static final MediaType HTML = new MediaType("text", "html");
+
     public static final String APPLICATION_XML = "application/xml";
 
 

@@ -15,8 +15,9 @@
  */
 package org.ldp4j.generic.ldp.runtime;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.*;
+import org.ldp4j.generic.http.RepresentationPreference;
+import org.ldp4j.generic.ldp.model.Preference;
 import org.ldp4j.generic.rdf.vocab.LDP;
 import org.ldp4j.generic.util.RdfUtils;
 import org.slf4j.Logger;
@@ -74,4 +75,29 @@ public class DirectContainerStrategy extends BaseContainerStrategy {
         }
 
     }
+
+    @Override
+    public Model getPreferredRepresentation(String containerURI, Model model, RepresentationPreference preference) {
+
+        boolean isMinital = preference.isMinimalInclusionRequired();
+
+        Model preferredModel = null;
+
+        // Remove the containment triples
+        if ( isMinital || preference.isOmissiontRequired(Preference.CONTAINMENT_TRIPLES)) {
+            StmtIterator containStatements = model.listStatements(model.createResource(containerURI), LDP.contains, (RDFNode) null);
+            Model containmentTriples = ModelFactory.createDefaultModel();
+            containmentTriples.add(containStatements);
+
+            preferredModel = model.difference(containmentTriples);
+
+        }
+        //TODO finish the removal of membership triples
+
+        return preferredModel;
+
+
+    }
+
+
 }

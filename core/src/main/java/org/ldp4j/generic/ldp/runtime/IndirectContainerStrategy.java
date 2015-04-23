@@ -16,11 +16,17 @@
 package org.ldp4j.generic.ldp.runtime;
 
 import com.hp.hpl.jena.rdf.model.Model;
+import org.ldp4j.generic.http.RepresentationPreference;
 
 public class IndirectContainerStrategy extends DirectContainerStrategy {
     @Override
     public void addMemberTriple(String containerURI, String newURI, Model resource, Model container) {
 
+    }
+
+    @Override
+    public Model getPreferredRepresentation(String containerURI, Model model, RepresentationPreference preference) {
+        return null;
     }
 
     @Override

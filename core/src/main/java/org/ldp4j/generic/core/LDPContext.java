@@ -18,6 +18,7 @@ package org.ldp4j.generic.core;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.ldp4j.generic.http.HttpMethod;
+import org.ldp4j.generic.http.RepresentationPreference;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,6 +36,8 @@ public class LDPContext {
     private Resource resourceType;
 
     private HttpMethod method;
+
+    private RepresentationPreference representationPreference;
 
     private int entityTag;
 
@@ -128,5 +131,13 @@ public class LDPContext {
 
     public void setPutToCreate(boolean putToCreate) {
         this.putToCreate = putToCreate;
+    }
+
+    public RepresentationPreference getRepresentationPreference() {
+        return representationPreference;
+    }
+
+    public void setRepresentationPreference(RepresentationPreference representationPreference) {
+        this.representationPreference = representationPreference;
     }
 }

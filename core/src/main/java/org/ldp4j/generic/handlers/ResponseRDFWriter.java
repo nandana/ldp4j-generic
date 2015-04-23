@@ -16,16 +16,26 @@
 package org.ldp4j.generic.handlers;
 
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.NodeIterator;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.vocabulary.RDF;
+import com.typesafe.config.Config;
+import org.ldp4j.generic.config.ConfigManager;
 import org.ldp4j.generic.core.Handler;
 import org.ldp4j.generic.core.HandlerResponse;
 import org.ldp4j.generic.core.LDPContext;
 import org.ldp4j.generic.core.LDPFault;
-import org.ldp4j.generic.http.HttpHeader;
-import org.ldp4j.generic.http.HttpMethod;
-import org.ldp4j.generic.http.HttpStatus;
-import org.ldp4j.generic.http.MediaType;
+import org.ldp4j.generic.http.*;
+import org.ldp4j.generic.ldp.runtime.BasicContainerStrategy;
+import org.ldp4j.generic.ldp.runtime.ContainerStrategy;
+import org.ldp4j.generic.ldp.runtime.DirectContainerStrategy;
+import org.ldp4j.generic.ldp.runtime.IndirectContainerStrategy;
 import org.ldp4j.generic.rdf.vocab.HttpMethods;
+import org.ldp4j.generic.rdf.vocab.LDP;
 import org.ldp4j.generic.util.MediaTypeUtils;
+import org.ldp4j.generic.util.PreferHeaderUtils;
+import org.ldp4j.generic.util.RdfUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +63,31 @@ public class ResponseRDFWriter implements Handler {
             return HandlerResponse.CONTINUE;
         }
 
+        HttpServletResponse response = context.getServletResponse();
+
+        Resource type = context.getResourceType();
+        if(LDP.BasicContainer.equals(type) || LDP.DirectContainer.equals(type) || LDP.IndirectContainer.equals(type)) {
+            RepresentationPreference preference = context.getRepresentationPreference();
+            if (preference != null) {
+
+                ContainerStrategy strategy = null;
+
+                if(LDP.BasicContainer.equals(context.getResourceType())){
+                    strategy = new BasicContainerStrategy();
+                } else if (LDP.DirectContainer.equals(context.getResourceType())) {
+                    strategy = new DirectContainerStrategy();
+                } else if (LDP.IndirectContainer.equals(context.getResourceType())) {
+                    strategy = new IndirectContainerStrategy();
+                }
+
+                String containerURI = context.getProperty(LDPContext.REQUEST_URL);
+
+                dataModel = strategy.getPreferredRepresentation(containerURI, dataModel, preference);
+                response.addHeader(HttpHeader.PREFERENCE_APPLIED.header(), PreferHeaderUtils.asPreferenceAppliedHeader(preference));
+
+            }
+        }
+
         HttpServletRequest request = context.getServletRequest();
 
         String accept = request.getHeader(HttpHeader.ACCEPT.header());
@@ -67,15 +102,62 @@ public class ResponseRDFWriter implements Handler {
             if (MediaType.TURTLE.isCompatible(mediaType)) {
                 format = "TURTLE";
                 contentType = MediaType.TURTLE;
+                logger.debug("Content type set to Turtle.");
                 break;
             } else if (MediaType.JSON_LD.isCompatible(mediaType)) {
                 format = "JSON-LD";
                 contentType = MediaType.JSON_LD;
+                logger.debug("Content type set to JSON-LD.");
                 break;
             } else if (MediaType.RDF_XML.isCompatible(mediaType)) {
                 format = "RDF/XML";
                 contentType = MediaType.RDF_XML;
+                logger.debug("Content type set to RDF/XML.");
                 break;
+
+            // This is to handle the custom html views
+            } else if (MediaType.HTML.isCompatible(mediaType)) {
+
+                logger.debug("Content type set to HTML.");
+
+                Config appConfig = ConfigManager.getAppConfig(false);
+                if(appConfig.getBoolean("html-view.enabled")) {
+                    logger.debug("HTML view is enabled.");
+
+                    String requestURI =  context.getProperty(LDPContext.REQUEST_URL);
+
+                    String urlPrefix;
+                    NodeIterator iterator = dataModel.listObjectsOfProperty(dataModel.createResource(requestURI),
+                            RDF.type);
+
+                    for(; iterator.hasNext(); ){
+                        RDFNode node = iterator.next();
+                        if (node.isURIResource()) {
+
+                            //TODO It is better to use the full URI instead of the local name
+                            String localName = node.asResource().getLocalName();
+
+                            String path = "html-view.map."+localName;
+                            logger.debug("Looking for the html view map for the key '{}'", path);
+
+                            if (appConfig.hasPath(path)) {
+                                urlPrefix =  appConfig.getString(path);
+
+                                String redirectUrl = urlPrefix + requestURI;
+
+                                response.setStatus(HttpStatus.SEE_OTHER.code());
+                                response.setHeader("Location", redirectUrl);
+
+                                logger.debug("Redirecting to the request to {}", redirectUrl);
+
+                                return HandlerResponse.ABORT;
+                            }
+
+                        }
+                    }
+
+                }
+
             }
         }
 
@@ -86,9 +168,9 @@ public class ResponseRDFWriter implements Handler {
 
         context.setProperty(LDPContext.RESP_CONTENT_TYPE, contentType.getValue());
 
-        HttpServletResponse response = context.getServletResponse();
         try {
-            response.setHeader(HttpHeader.CONTENT_TYPE.header(), contentType.getValue());
+            //TODO properly set the character encoding
+            response.setHeader(HttpHeader.CONTENT_TYPE.header(), contentType.getValue()+"; charset=utf-8");
 
             if (HttpMethod.HEAD.equals(context.getMethod())) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();

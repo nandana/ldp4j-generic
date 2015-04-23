@@ -22,11 +22,9 @@ import org.ldp4j.generic.core.Handler;
 import org.ldp4j.generic.core.HandlerResponse;
 import org.ldp4j.generic.core.LDPContext;
 import org.ldp4j.generic.core.LDPFault;
-import org.ldp4j.generic.http.HttpMethod;
-import org.ldp4j.generic.http.HttpStatus;
-import org.ldp4j.generic.http.Link;
-import org.ldp4j.generic.http.LinkBuilderImpl;
+import org.ldp4j.generic.http.*;
 import org.ldp4j.generic.rdf.vocab.LDP;
+import org.ldp4j.generic.util.PreferHeaderUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +74,7 @@ public class RequestPreProcessor implements Handler {
 
         //Look for the Link relation header
         List<Link> links = new ArrayList<Link>();
-        Enumeration<String> values = request.getHeaders("Link");
+        Enumeration<String> values = request.getHeaders(HttpHeader.LINK.header());
         while(values.hasMoreElements()){
             List<Link> temp = Link.parse(values.nextElement());
             links.addAll(temp);
@@ -102,6 +100,18 @@ public class RequestPreProcessor implements Handler {
             context.setProperty(LDPContext.INTERACTION_MODEL, interactionModel);
         } else {
             logger.debug("No interaction model found in the request.");
+        }
+
+        //Look for the Prefer header
+        logger.trace("Looking for Prefer header ...");
+        values = request.getHeaders(HttpHeader.PREFER.header());
+        if(values.hasMoreElements()){
+            String preferValue = values.nextElement();
+            logger.trace("Prefer header found: {}", preferValue);
+            RepresentationPreference pref = PreferHeaderUtils.parse(preferValue);
+            context.setRepresentationPreference(pref);
+        } else {
+            logger.trace("No Prefer header was found in the request.");
         }
 
         return HandlerResponse.CONTINUE;

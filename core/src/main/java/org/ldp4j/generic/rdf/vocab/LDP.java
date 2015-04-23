@@ -30,6 +30,14 @@ public class LDP {
 
     public static final String PREFIX = "ldp";
 
+    public static final String PREFER_CONTAINMENT = NS + "PreferContainment";
+
+    public static final String PREFER_EMPTY_CONTAINER = NS + "PreferEmptyContainer";
+
+    public static final String PREFER_MINIMAL_CONTAINER = NS + "PreferMinimalContainer";
+
+    public static final String PREFER_MEMBERSHIP = NS + "PreferMembership";
+
     /** <p>The namespace of the vocabulary as a string</p>
      *  @see #NS */
     public static String getURI() {return NS;}

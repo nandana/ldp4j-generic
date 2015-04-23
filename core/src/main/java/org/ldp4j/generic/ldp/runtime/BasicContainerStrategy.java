@@ -16,7 +16,13 @@
 package org.ldp4j.generic.ldp.runtime;
 
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 import org.ldp4j.generic.core.LDPFault;
+import org.ldp4j.generic.http.RepresentationPreference;
+import org.ldp4j.generic.ldp.model.Preference;
+import org.ldp4j.generic.rdf.vocab.LDP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,5 +37,22 @@ public class BasicContainerStrategy extends BaseContainerStrategy {
         return;
     }
 
+    @Override
+    public Model getPreferredRepresentation(String containerURI, Model model, RepresentationPreference preference) {
+
+        // Remove the containment triples
+        if (preference.isMinimalInclusionRequired() || preference.isOmissiontRequired(Preference.CONTAINMENT_TRIPLES)) {
+            StmtIterator containStatements = model.listStatements(model.createResource(containerURI), LDP.contains, (RDFNode) null);
+            Model containmentTriples = ModelFactory.createDefaultModel();
+            containmentTriples.add(containStatements);
+
+            return model.difference(containmentTriples);
+
+        } else {
+            Model copy = ModelFactory.createDefaultModel();
+            return copy.add(model);
+        }
+
+    }
 
 }

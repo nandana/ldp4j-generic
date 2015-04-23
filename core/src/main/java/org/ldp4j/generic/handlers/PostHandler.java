@@ -23,6 +23,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.hp.hpl.jena.vocabulary.RDF;
+import org.apache.commons.io.IOUtils;
 import org.ldp4j.generic.config.ConfigManager;
 import org.ldp4j.generic.config.DefaultPropertyConfig;
 import org.ldp4j.generic.core.Handler;
@@ -44,7 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.io.*;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -131,7 +132,15 @@ public class PostHandler implements Handler {
         if(format != null){
             Model model = ModelFactory.createDefaultModel();
             try {
-                model.read(context.getServletRequest().getInputStream(), newURI, format);
+
+                StringWriter writer = new StringWriter();
+                IOUtils.copy(context.getServletRequest().getInputStream(), writer, "utf-8");
+                String content = writer.toString();
+
+                logger.trace("Resource content \n {}", content);
+
+                Reader reader = new StringReader(content);
+                model.read(reader, newURI, format);
 
                 DefaultPropertyConfig defaultPropertyConfig = ConfigManager.getDefaultPropertyConfig();
 
